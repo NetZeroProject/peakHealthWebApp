@@ -5,13 +5,12 @@ import peakHealthUsers from "../../models/user";
  * @param {import('next').NextApiRequest} req
  * @param {import('next').NextApiResponse} res
  */
-export default async function createUser(req, res) {
-  const { username, score, voiceFeatures } = req.body;
+export default async function scores(req, res) {
+  const { id, score, voiceFeatures,audio} = req.body;
   await connectMongo();
-
   await peakHealthUsers.updateOne(
-    { username },
-    { $set: { score, voiceFeatures } }
+    { _id:id },
+    { $set: { score,voiceFeatures,audio } }
   );
   res.status(200)
 }

@@ -37,7 +37,8 @@ const VoiceRecord = (props) => {
   };
   const onStop = (audio) => {
     console.log(audio);
-    voiceState.sendAudio(audio.blob);
+    voiceState.sendAudio(audio);
+    // console.log(voiceState.voiceFeatures)
   };
   return (
     <>

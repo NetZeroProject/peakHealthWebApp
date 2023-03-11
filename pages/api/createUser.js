@@ -10,5 +10,5 @@ export default async function createUser(req, res) {
     await connectMongo();
     const userData=await new peakHealthUsers({username,email,gender,year,ip});
     await userData.save();
-    res.status(200)
+    res.json(userData._id.valueOf())
 }

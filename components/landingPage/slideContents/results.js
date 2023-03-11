@@ -1,12 +1,18 @@
 import { useContext, useEffect } from "react";
 import dynamic from "next/dynamic";
 import voiceContext from "../contextStrore/voiceContext";
+import axios from "axios";
 const ReactSpeedometer = dynamic(() => import("react-d3-speedometer"), {
   ssr: false,
 });
 const results = (props) => {
   const voiceState = useContext(voiceContext);
-  console.log(voiceState.voiceFeatures.guessScore)
+  console.log(voiceState.voiceFeatures);
+  axios.post("/api/guessScore", {
+    username: voiceState.voiceFeatures.userName,
+    guessScore: voiceState.voiceFeatures.guessScore,
+    id:voiceState.voiceFeatures.userId
+  });
   const overallScore = voiceState.voiceFeatures.loading
     ? voiceState.voiceFeatures.score
     : 40;

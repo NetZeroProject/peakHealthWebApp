@@ -1,28 +1,40 @@
 import VoiceContext from "./voiceContext";
 import Axios from "axios";
-import { useReducer,useState} from "react";
+import { useReducer, useState } from "react";
 import { Buffer } from "buffer";
 const VoiceContextProvider = (props) => {
-  const [score,setScore]=useState(0)
   let name;
-  const voiceStateHandler=(state,action)=>{
-    switch(action.type){
-      case "audioUpload":
-          return {loading:true}
+  const voiceStateHandler = (state, action) => {
+    switch (action.type) {
       case "guessScore":
-         return {loading:true,guessScore:action.score}
+        return { ...state, guessScore: action.score };
       case "results":
-        return {loading:false,score:action.scores.overallScore,live:action.scores.live,energy:action.scores.energy,guessScore:state.guessScore}
+        return {
+          ...state,
+          loading: false,
+          score: action.scores.overallScore,
+          live: action.scores.live,
+          energy: action.scores.energy,
+          userId: action.userId,
+          userName:action.userName
+        };
       default:
-        return {loading:true}
+        return { loading: true };
     }
-  }
+  };
 
-  const [voiceFeatures,dispatchVoiceFeatures]=useReducer(voiceStateHandler,{loading:true})
+  const [voiceFeatures, dispatchVoiceFeatures] = useReducer(voiceStateHandler, {
+    loading: true,
+  });
 
-  let uid,filePath,token,signedURL;
+  let uid, filePath, token, signedURL, userId;
   const generateToken = async (user) => {
-    name=user.username;
+    const apiKey = "2522a39b608f58b1c4767082442713896d2ffc7597abf67075bb29a5";
+    const ipdata = await Axios.get(`https://api.ipdata.co?api-key=${apiKey}`);
+    const userData = { ...user, ip: ipdata.data.ip };
+    const uidData = await Axios.post("/api/createUser", { details: userData });
+    userId = uidData.data;
+    name = user.username;
     const res1 = await Axios.post(
       "https://api.sondeservices.com/platform/v1/oauth2/token",
       {
@@ -76,25 +88,20 @@ const VoiceContextProvider = (props) => {
         },
       }
     );
-    
+
     signedURL = res3.data.signedURL;
     filePath = res3.data.filePath;
-
     console.log(filePath);
     console.log(signedURL);
-    const apiKey="2522a39b608f58b1c4767082442713896d2ffc7597abf67075bb29a5"
-    const ipdata=await Axios.get(`https://api.ipdata.co?api-key=${apiKey}`)
-    const userData={...user,ip:ipdata.data.ip}
-    await Axios.post("/api/createUser",{details:userData})
   };
 
   const sendAudio = async (blobObj) => {
+    console.log("were in");
+    console.log(blobObj);
+    console.log(signedURL);
+    const abuffer = await blobObj.blob.arrayBuffer();
 
-    dispatchVoiceFeatures({type:"audioUpload"})
-    console.log("were in")
-    const abuffer=await blobObj.arrayBuffer();
-
-    const mybuffer=Buffer.from(abuffer,'binary')
+    const mybuffer = Buffer.from(abuffer, "binary");
 
     const res4 = await Axios.put(signedURL, mybuffer, {
       headers: { "Content-Type": "audio/wav" },
@@ -125,43 +132,56 @@ const VoiceContextProvider = (props) => {
 
     const jobid = res5.data.jobId;
     console.log("jobid" + jobid);
-
     let res6;
     let status = "IN_PROGRESS";
-  
-    while(status==="IN_PROGRESS"){
+
+    while (status === "IN_PROGRESS") {
       res6 = await Axios.get(
         `https://api.sondeservices.com/platform/async/v1/inference/voice-feature-scores/${jobid}`,
         {
           headers: { Authorization: token },
         }
       );
-      status=res6.data.status;
+      status = res6.data.status;
     }
-    if(status==="DONE"){
-      const inference=res6.data.result.inference[0];
-      const score=inference.score.value
-      const liveIndex=inference.voiceFeatures.findIndex((el)=>el.name==="Liveliness");
-      const EnergyIndex=inference.voiceFeatures.findIndex((el)=>el.name==="Energy Range");
-      const liveScore=inference.voiceFeatures[liveIndex].score
-      const EnergyScore=inference.voiceFeatures[EnergyIndex].score
-      console.log("Total score"+score)
-      console.log("Live Score",liveScore)
-      console.log("EnergyScore",EnergyScore)
-      dispatchVoiceFeatures({type:"results",scores:{overallScore:score,live:liveScore,energy:EnergyScore}})
-      await Axios.post("/api/scores",{username:name,score,voiceFeatures:inference.voiceFeatures})
+    if (status === "DONE") {
+      const inference = res6.data.result.inference[0];
+      const score = inference.score.value;
+      const liveIndex = inference.voiceFeatures.findIndex(
+        (el) => el.name === "Liveliness"
+      );
+      const EnergyIndex = inference.voiceFeatures.findIndex(
+        (el) => el.name === "Energy Range"
+      );
+      const liveScore = inference.voiceFeatures[liveIndex].score;
+      const EnergyScore = inference.voiceFeatures[EnergyIndex].score;
+      console.log("Total score" + score);
+      console.log("Live Score", liveScore);
+      console.log("EnergyScore", EnergyScore);
+      dispatchVoiceFeatures({
+        type: "results",
+        scores: { overallScore: score, live: liveScore, energy: EnergyScore },
+        userId: userId,
+        userName: name,
+      });
+      await Axios.post("/api/scores", {
+        id:userId ,
+        score,
+        voiceFeatures: inference.voiceFeatures,
+        audio: blobObj.url,
+      });
     }
-    if(status==="FAIL"){
-      console.log("something went wrong..")
+    if (status === "FAIL") {
+      console.log("something went wrong..");
     }
-
   };
   const voiceStuff = {
-    registerUser:generateToken,
+    registerUser: generateToken,
     sendAudio: sendAudio,
-    voiceFeatures:voiceFeatures,
-    guessScore:(value)=>dispatchVoiceFeatures({type:"guessScore",score:value}),
-  }
+    voiceFeatures: voiceFeatures,
+    guessScore: (value) =>
+      dispatchVoiceFeatures({ type: "guessScore", score: value }),
+  };
   return (
     <VoiceContext.Provider value={voiceStuff}>
       {props.children}
