@@ -12,5 +12,5 @@ export default async function scores(req, res) {
     { _id:id },
     { $set: { score,voiceFeatures,audio } }
   );
-  res.status(200)
+  res.send()
 }

@@ -9,5 +9,5 @@ export default async function guessScore(req, res) {
     const {guessScore,id}=req.body;
     await connectMongo();
     await peakHealthUsers.updateOne({_id:id},{$set:{guessScore}});
-    res.status(200)
+    res.send()
 }
