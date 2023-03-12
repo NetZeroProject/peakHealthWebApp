@@ -24,10 +24,10 @@ const progressPoint = (props) => {
         <div
           className={`w-[15px] h-[15px] md:w-[20px] md:h-[20px] ${
             props.progress.working ? "bg-[#6ed1f9]" : "bg-gray-200"
-          } rounded-full flex items-center justify-center transition-all duration-300 ease-linear`}
+          } rounded-full flex items-center  justify-center transition-all duration-300 ease-linear`}
         >
           {!props.progress.completed?<div
-            className={` flex items-center justify-center md:w-[15px] md:h-[15px] relative md:left-[0.3px] ${
+            className={` flex items-center justify-center md:w-[15px] md:h-[15px] relative top-[0.1px] md:left-[0.3px] ${
               props.progress.working  ? "bg-white" : "bg-gray-200"
             } 
             ${props.progress.animate && "pulse"}

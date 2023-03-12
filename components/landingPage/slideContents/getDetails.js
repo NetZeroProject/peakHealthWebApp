@@ -28,7 +28,7 @@ const GetDetails = (props) => {
   };
   return (
     <>
-      <h1 className="text-3xl text-center font-bold font-sans relative top-5 w-max"> 
+      <h1 className="text-3xl text-center font-bold font-sans relative top-5 w-max">
         Your details for AI to measure your stress level accurately
       </h1>
       <div className="flex md:flex-row flex-col-reverse md:mt-20 mt-5 justify-around">
@@ -38,12 +38,14 @@ const GetDetails = (props) => {
               autoplay
               loop
               src={processing}
-              className="w-[20rem] h-[20rem] relative bottom-5 ml-20"
+              className="w-[20rem] h-[20rem] relative bottom-5 left-5"
             ></Player>
           </div>
-          <h1 className="text-2xl text-center">
-            We are Processing your Results
-          </h1>
+          <p className="text-sm w-[20rem] text-gray-500 text-center">
+            Your information will be kept confidential and used only to measure
+            your stress level and personalize your stress relief
+            recommendations. Let's begin!
+          </p>
         </div>
         <div className="">
           <form className="mt-10" onSubmit={getSubmitHandler}>
